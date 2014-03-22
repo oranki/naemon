@@ -144,8 +144,7 @@ Requires:    perl(Catalyst::Plugin::Authorization::Roles)
 Requires:    perl(Log::Log4perl), perl(Log::Dispatch::File), perl(namespace::autoclean), perl(Plack::Handler::CGI)
 Requires:    perl(Storable), perl(threads), perl(Thread::Queue), perl(Thread::Semaphore), perl(List::Compare), perl(List::MoreUtils)
 Requires:    perl(MIME::Lite), perl(Class::Inspector), perl(LWP::Protocol::https), perl(DBI), perl(DBD::mysql)
-#Requires:    perl(LWP::Protocol::connect), perl(Catalyst::Plugin::Compress), perl(Excel::Template::Plus), perl(Date::Calc::XS), perl(Catalyst::View::Excel::Template::Plus), perl(Catalyst::Plugin::CustomErrorMessage), perl(Catalyst::View::GD)
-#Requires:    perl(Catalyst::Plugin::Redirect)   # not yet required, only for later catalyst releases
+#Requires:    perl(LWP::Protocol::connect), perl(Catalyst::Plugin::Compress), perl(Excel::Template::Plus), perl(Date::Calc::XS), perl(Catalyst::View::Excel::Template::Plus), perl(Catalyst::Plugin::CustomErrorMessage), perl(Catalyst::View::GD), perl(Catalyst::Plugin::Redirect)
 BuildRequires: perl(Config::Any), perl(Date::Calc), perl(File::Slurp)
 %{?perl_default_filter}
 %global __provides_exclude_from %{_datadir}/%{name}/plugins|%{_datadir}/%{name}/lib
@@ -416,8 +415,6 @@ if /usr/bin/id %{apacheuser} &>/dev/null; then
     if ! /usr/bin/id -Gn %{apacheuser} 2>/dev/null | grep -q naemon ; then
         /usr/sbin/usermod -a -G naemon %{apacheuser} >/dev/null
     fi
-else
-    %logmsg "User \"%{apacheuser}\" does not exist and is not added to group \"naemon\". Sending commands to naemon from the CGIs is not possible."
 fi
 
 service httpd condrestart
@@ -430,9 +427,6 @@ fi
 if [ -d %{_libdir}/%{name}/perl5 ]; then
   /usr/bin/thruk -a clearcache,installcron --local > /dev/null
 fi
-
-echo "Naemon/Thruk have been configured for http://$(hostname)/naemon/."
-echo "The default user is 'admin' with password 'admin'. You can usually change that by 'htpasswd /etc/naemon/htpasswd admin'. And you really should change that!"
 exit 0
 
 %posttrans thruk
@@ -445,7 +439,6 @@ if [ -d /var/cache/%{name}/thruk_update/plugins/. ]; then
   rm -f /etc/%{name}/plugins/plugins-enabled/*
   cp -rp /var/cache/%{name}/thruk_update/plugins/* /etc/%{name}/plugins/plugins-enabled/ 2>/dev/null  # might fail if no plugins are enabled
 fi
-echo "thruk plugins enabled:" $(ls /etc/%{name}/plugins/plugins-enabled/)
 rm -rf /var/cache/%{name}/thruk_update
 
 %preun thruk
@@ -574,8 +567,6 @@ exit 0
 
 %files devel
 %attr(-,root,root) %{_includedir}/%{name}/
-%attr(-,root,root) %{_libdir}/%{name}/libnaemon.a
-%attr(-,root,root) %{_libdir}/%{name}/libnaemon.la
 
 %files livestatus
 %attr(0755,root,root) %{_bindir}/%{name}-unixcat
