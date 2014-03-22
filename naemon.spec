@@ -1,13 +1,7 @@
 %define logmsg logger -t %{name}/rpm
-%if %{defined suse_version}
-%define apacheuser wwwrun
-%define apachegroup www
-%define apachedir apache2
-%else
 %define apacheuser apache
 %define apachegroup apache
 %define apachedir httpd
-%endif
 
 # Setup some debugging options in case we build with --with debug
 %if %{defined _with_debug}
@@ -40,12 +34,7 @@ BuildRequires: automake
 BuildRequires: libtool
 BuildRequires: gcc-c++
 BuildRequires: help2man
-# sles / rhel specific requirements
-%if %{defined suse_version}
-BuildRequires: libexpat-devel
-%else
 BuildRequires: expat-devel
-%endif
 # rhel6 specific requirements
 %if 0%{?el6}
 BuildRequires: perl-ExtUtils-MakeMaker
@@ -132,12 +121,7 @@ Requires(preun): %{name}-thruk-libs = %{version}-%{release}
 Requires(post): %{name}-thruk-libs = %{version}-%{release}
 Requires:    perl logrotate gd wget
 Conflicts:   thruk
-AutoReqProv: no
-%if %{defined suse_version}
-Requires:    apache2 apache2-mod_fcgid cron
-%else
 Requires:    httpd mod_fcgid
-%endif
 
 %description thruk
 This package contains the thruk gui for %{name}.
@@ -146,7 +130,6 @@ This package contains the thruk gui for %{name}.
 %package thruk-libs
 Summary:     Perl Librarys For Naemons Thruk Gui
 Group:       Applications/System
-AutoReqProv: no
 Requires:    %{name}-thruk = %{version}-%{release}
 Conflicts:   thruk
 
@@ -158,12 +141,7 @@ This package contains the library files for the thruk gui.
 Summary:     Thruk Gui For Naemon Reporting Addon
 Group:       Applications/System
 Requires:    %{name}-thruk = %{version}-%{release}
-%if %{defined suse_version}
-Requires: xorg-x11-server-extra
-%else
 Requires: xorg-x11-server-Xvfb libXext dejavu-fonts-common
-%endif
-AutoReqProv: no
 
 %description thruk-reporting
 This package contains the reporting addon for naemons thruk gui useful for sla
@@ -286,11 +264,7 @@ esac
 
 if /usr/bin/id %{apacheuser} &>/dev/null; then
     if ! /usr/bin/id -Gn %{apacheuser} 2>/dev/null | grep -q naemon ; then
-%if %{defined suse_version}
-        /usr/sbin/groupmod -A %{apacheuser} naemon >/dev/null
-%else
         /usr/sbin/usermod -a -G naemon %{apacheuser} >/dev/null
-%endif
     fi
 fi
 touch /var/log/%{name}/%{name}.log
@@ -422,23 +396,12 @@ chown -R %{apacheuser}:%{apachegroup} /var/cache/%{name}/thruk /var/log/%{name}/
 # add webserver user to group naemon
 if /usr/bin/id %{apacheuser} &>/dev/null; then
     if ! /usr/bin/id -Gn %{apacheuser} 2>/dev/null | grep -q naemon ; then
-%if %{defined suse_version}
-        /usr/sbin/groupmod -A %{apacheuser} naemon >/dev/null
-%else
         /usr/sbin/usermod -a -G naemon %{apacheuser} >/dev/null
-%endif
     fi
 else
     %logmsg "User \"%{apacheuser}\" does not exist and is not added to group \"naemon\". Sending commands to naemon from the CGIs is not possible."
 fi
 
-%if %{defined suse_version}
-a2enmod alias
-a2enmod fcgid
-a2enmod auth_basic
-a2enmod rewrite
-/etc/init.d/apache2 try-restart
-%else
 service httpd condrestart
 if [ "$(getenforce 2>/dev/null)" = "Enforcing" ]; then
   echo "******************************************";
@@ -446,7 +409,6 @@ if [ "$(getenforce 2>/dev/null)" = "Enforcing" ]; then
   echo "SELinux: "$(getenforce);
   echo "******************************************";
 fi
-%endif
 if [ -d %{_libdir}/%{name}/perl5 ]; then
   /usr/bin/thruk -a clearcache,installcron --local > /dev/null
 fi
