@@ -37,10 +37,10 @@ BuildRequires: help2man
 BuildRequires: expat-devel
 # rhel6 specific requirements
 %if 0%{?el6}
-BuildRequires: perl-ExtUtils-MakeMaker
+BuildRequires: perl(ExtUtils::MakeMaker)
 %endif
 %if 0%{?el7}%{?fc20}%{?fc21}%{?fc22}
-BuildRequires: perl-autodie
+BuildRequires: perl(autodie)
 BuildRequires: systemd
 %endif
 
@@ -120,8 +120,10 @@ Requires:    %{name}-thruk-libs = %{version}-%{release}
 Requires(preun): %{name}-thruk-libs = %{version}-%{release}
 Requires(post): %{name}-thruk-libs = %{version}-%{release}
 Requires:    perl logrotate gd wget
-Conflicts:   thruk
 Requires:    httpd mod_fcgid
+%{?perl_default_filter}
+%global __provides_exclude_from %{_datadir}/%{name}/plugins|%{_datadir}/%{name}/lib
+%global __requires_exclude_from %{_datadir}/%{name}/plugins|%{_datadir}/%{name}/lib
 
 %description thruk
 This package contains the thruk gui for %{name}.
@@ -131,7 +133,23 @@ This package contains the thruk gui for %{name}.
 Summary:     Perl Librarys For Naemons Thruk Gui
 Group:       Applications/System
 Requires:    %{name}-thruk = %{version}-%{release}
-Conflicts:   thruk
+Requires:    perl(parent), perl(JSON::XS), perl(Config::General), perl(Config::Any), perl(Class::Data::Inheritable), perl(MRO::Compat)
+Requires:    perl(LWP::UserAgent), perl(Net::HTTP), perl(Class::C3::Adopt::NEXT), perl(Class::C3::XS), perl(URI::Escape), perl(Moose)
+Requires:    perl(Socket), perl(GD), perl(Template), perl(Template::Plugin::Date), perl(Date::Calc)
+Requires:    perl(Data::Page), perl(File::Slurp), perl(Date::Manip), perl(Class::Accessor::Fast), perl(Catalyst)
+Requires:    perl(Catalyst::Runtime), perl(Catalyst::Utils), perl(Catalyst::Controller), perl(Catalyst::Exception), perl(Catalyst::ScriptRunner)
+Requires:    perl(Catalyst::Authentication::User::Hash), perl(Catalyst::View), perl(Catalyst::View::TT), perl(Catalyst::View::JSON)
+Requires:    perl(Catalyst::Plugin::ConfigLoader), perl(Catalyst::Plugin::Static::Simple)
+Requires:    perl(Catalyst::Plugin::Authorization::Roles)
+Requires:    perl(Log::Log4perl), perl(Log::Dispatch::File), perl(namespace::autoclean), perl(Plack::Handler::CGI)
+Requires:    perl(Storable), perl(threads), perl(Thread::Queue), perl(Thread::Semaphore), perl(List::Compare), perl(List::MoreUtils)
+Requires:    perl(MIME::Lite), perl(Class::Inspector), perl(LWP::Protocol::https), perl(DBI), perl(DBD::mysql)
+#Requires:    perl(LWP::Protocol::connect), perl(Catalyst::Plugin::Compress), perl(Excel::Template::Plus), perl(Date::Calc::XS), perl(Catalyst::View::Excel::Template::Plus), perl(Catalyst::Plugin::CustomErrorMessage), perl(Catalyst::View::GD)
+#Requires:    perl(Catalyst::Plugin::Redirect)   # not yet required, only for later catalyst releases
+BuildRequires: perl(Config::Any), perl(Date::Calc), perl(File::Slurp)
+%{?perl_default_filter}
+%global __provides_exclude_from %{_datadir}/%{name}/plugins|%{_datadir}/%{name}/lib
+%global __requires_exclude_from %{_datadir}/%{name}/plugins|%{_datadir}/%{name}/lib|%{_bindir}/thruk|%{_datadir}/%{name}/thruk_auth|%{_datadir}/%{name}/script/thruk_fastcgi.pl
 
 %description thruk-libs
 This package contains the library files for the thruk gui.
@@ -628,7 +646,7 @@ exit 0
 %{_mandir}/man8/thruk.8*
 
 %files thruk-libs
-%attr(-,root,root) %{_libdir}/%{name}/perl5
+#%attr(-,root,root) %{_libdir}/%{name}/perl5
 
 %files thruk-reporting
 %{_datadir}/%{name}/plugins/plugins-available/reports2

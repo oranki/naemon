@@ -6,7 +6,7 @@ include gui/script/append.make.options
 P5TMPDIST = $(shell pwd)/libs/.build
 
 all:
-	cd libs && make
+	#cd libs && make
 	cd gui && yes n | PERL5LIB=$$P5DIR/dest/lib/perl5/:${P5TMPDIST}/dest/lib/perl5 perl Makefile.PL
 
 staticfiles:
@@ -15,7 +15,7 @@ staticfiles:
 install:
 	cd gui && make install naemon-patch
 	mkdir -p ${DESTDIR}${THRUKLIBS}
-	cp -rp ${P5TMPDIST}/dest/lib/perl5/* ${DESTDIR}${THRUKLIBS}/
+	#cp -rp ${P5TMPDIST}/dest/lib/perl5/* ${DESTDIR}${THRUKLIBS}/
 	# clean up some old files
 	rm -rf ${DESTDIR}/etc/naemon/themes/themes-available/{Wakizashi,Neat}
 	rm -rf ${DESTDIR}/etc/naemon/themes/themes-enabled/{Wakizashi,Neat}
