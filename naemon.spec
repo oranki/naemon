@@ -34,10 +34,12 @@ BuildRequires: automake
 BuildRequires: libtool
 BuildRequires: gcc-c++
 BuildRequires: help2man
+BuildRequires: rsync
 BuildRequires: expat-devel
 # rhel6 specific requirements
 %if 0%{?el6}
 BuildRequires: perl(ExtUtils::MakeMaker)
+BuildRequires: perl(Module::Install)
 %endif
 %if 0%{?el7}%{?fc20}%{?fc21}%{?fc22}
 BuildRequires: perl(autodie)
@@ -187,7 +189,6 @@ CFLAGS="%{mycflags}" LDFLAGS="$CFLAGS" %configure \
     --localstatedir="%{_localstatedir}/lib/%{name}" \
     --sysconfdir="%{_sysconfdir}/%{name}" \
     --enable-event-broker \
-    --without-tests \
     --with-pluginsdir="%{_libdir}/%{name}/plugins" \
     --with-tempdir="%{_localstatedir}/cache/%{name}" \
     --with-checkresultdir="%{_localstatedir}/cache/%{name}/checkresults" \
@@ -302,6 +303,9 @@ case "$*" in
       service %{name} stop >/dev/null 2>&1 || :
       chkconfig --del %{name} || :
     %endif
+    rm -f /var/lib/naemon/status.dat
+    rm -f /var/lib/naemon/naemon.qh
+    rm -f /var/lib/naemon/naemon.tmp*
   ;;
   *) echo case "$*" not handled in preun
 esac
@@ -591,6 +595,7 @@ exit 0
 %config(noreplace) %{_sysconfdir}/%{apachedir}/conf.d/thruk_cookie_auth_vhost.conf
 %config(noreplace) %{_sysconfdir}/%{name}/themes
 %config(noreplace) %{_sysconfdir}/%{name}/menu_local.conf
+%config(noreplace) %{_sysconfdir}/%{name}/usercontent
 %attr(0755,root, root) %{_datadir}/%{name}/thruk_auth
 %attr(0755,root, root) %{_datadir}/%{name}/script/thruk_fastcgi.pl
 %attr(0755,%{apacheuser},%{apachegroup}) %dir %{_localstatedir}/cache/%{name}/thruk
