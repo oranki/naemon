@@ -41,6 +41,7 @@ BuildRequires: libtool
 BuildRequires: help2man
 BuildRequires: rsync
 BuildRequires: expat-devel
+BuildRequires: libicu-devel
 # rhel6 specific requirements
 %if 0%{?el6}
 BuildRequires: perl-ExtUtils-MakeMaker
@@ -301,7 +302,7 @@ if [ "$1" = "2" ]; then
 elif [ "$1" = "1" ]; then
     # New install, enable module
     if [ -e %{_sysconfdir}/%{name}/%{name}.cfg ]; then
-      sed -i %{_sysconfdir}/%{name}/%{name}.cfg -e 's~#\(broker_module=/usr/lib[0-9]*/%{name}/livestatus.so.*\)~\1~'
+      sed -i %{_sysconfdir}/%{name}/%{name}.cfg -e 's~#\(broker_module=/usr/lib[0-9]*/%{name}/%{name}-livestatus/livestatus.so.*\)~\1~'
     fi
 fi
 
@@ -314,7 +315,7 @@ fi
 if [ "$1" = "0" ]; then
     # POSTUN
     if [ -e %{_sysconfdir}/%{name}/%{name}.cfg ]; then
-      sed -i %{_sysconfdir}/%{name}/%{name}.cfg -e 's~\(broker_module=/usr/lib[0-9]*/%{name}/livestatus.so.*\)~#\1~'
+      sed -i %{_sysconfdir}/%{name}/%{name}.cfg -e 's~\(broker_module=/usr/lib[0-9]*/%{name}/%{name}-livestatus/livestatus.so.*\)~#\1~'
     fi
 fi
 
