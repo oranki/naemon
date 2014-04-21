@@ -25,13 +25,11 @@ License: GPLv2
 Group: Applications/System
 URL: http://www.naemon.org/
 Source0: http://labs.consol.de/%{name}/release/v%{version}/src/%{name}-%{version}.tar.gz
-BuildRequires: rsync
 BuildRequires: gd-devel > 1.8
 BuildRequires: zlib-devel
 BuildRequires: libpng-devel
 BuildRequires: libjpeg-devel
 BuildRequires: mysql-devel
-BuildRequires: doxygen
 BuildRequires: gperf
 BuildRequires: perl
 BuildRequires: perl-Module-Install
@@ -40,11 +38,13 @@ BuildRequires: gd
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: libtool
-BuildRequires: chrpath
+BuildRequires: help2man
+BuildRequires: rsync
 BuildRequires: expat-devel
 # rhel6 specific requirements
 %if 0%{?el6}
 BuildRequires: perl-ExtUtils-MakeMaker
+BuildRequires: perl(Module::Install)
 %endif
 %if 0%{?rhel} >= 7 || 0%{?fedora} >= 20
 BuildRequires: perl-autodie
@@ -53,6 +53,7 @@ BuildRequires: systemd
 
 Requires(pre): shadow-utils
 Requires: %{name}-core            = %{version}-%{release}
+Requires: %{name}-tools           = %{version}-%{release}
 Requires: %{name}-livestatus      = %{version}-%{release}
 Requires: %{name}-thruk           = %{version}-%{release}
 Requires: %{name}-thruk-reporting = %{version}-%{release}
@@ -85,6 +86,17 @@ Requires:  logrotate
 contains the %{name} core
 
 
+%package tools
+Summary:   Naemon Monitoring Tools
+Group:     Applications/System
+
+%description tools
+contains tools for %{name}.
+ - naemonstats:  display statistics
+ - oconfsplit:   divide configurations by groups
+ - shadownaemon: shadow a remote naemon core over livestatus
+
+
 %package livestatus
 Summary:        Naemon Livestatus Eventbroker Module
 Group:          Applications/System
@@ -102,8 +114,9 @@ Requires:    %{name}-thruk-libs = %{version}-%{release}
 Requires(preun): %{name}-thruk-libs = %{version}-%{release}
 Requires(post): %{name}-thruk-libs = %{version}-%{release}
 Requires:    perl logrotate gd wget
-Conflicts:   thruk
 Requires:    httpd mod_fcgid
+%global __provides_exclude_from %{_datadir}/%{name}/plugins|%{_datadir}/%{name}/lib
+%global __requires_exclude_from %{_datadir}/%{name}/plugins|%{_datadir}/%{name}/lib
 
 %description thruk
 This package contains the thruk gui for %{name}
@@ -113,7 +126,22 @@ This package contains the thruk gui for %{name}
 Summary:     Perl Librarys For Naemons Thruk Gui
 Group:       Applications/System
 Requires:    %{name}-thruk = %{version}-%{release}
-Conflicts:   thruk
+Requires:    perl(parent), perl(JSON::XS), perl(Config::General), perl(Config::Any), perl(Class::Data::Inheritable), perl(MRO::Compat)
+Requires:    perl(LWP::UserAgent), perl(Net::HTTP), perl(Class::C3::Adopt::NEXT), perl(Class::C3::XS), perl(URI::Escape), perl(Moose)
+Requires:    perl(Socket), perl(GD), perl(Template), perl(Template::Plugin::Date), perl(Date::Calc)
+Requires:    perl(Data::Page), perl(File::Slurp), perl(Date::Manip), perl(Class::Accessor::Fast), perl(Catalyst)
+Requires:    perl(Catalyst::Runtime), perl(Catalyst::Utils), perl(Catalyst::Controller), perl(Catalyst::Exception), perl(Catalyst::ScriptRunner)
+Requires:    perl(Catalyst::Authentication::User::Hash), perl(Catalyst::View), perl(Catalyst::View::TT), perl(Catalyst::View::JSON)
+Requires:    perl(Catalyst::Plugin::ConfigLoader), perl(Catalyst::Plugin::Static::Simple)
+Requires:    perl(Catalyst::Plugin::Authorization::Roles)
+Requires:    perl(Log::Log4perl), perl(Log::Dispatch::File), perl(namespace::autoclean), perl(Plack::Handler::CGI)
+Requires:    perl(Storable), perl(threads), perl(Thread::Queue), perl(Thread::Semaphore), perl(List::Compare), perl(List::MoreUtils)
+Requires:    perl(MIME::Lite), perl(Class::Inspector), perl(LWP::Protocol::https), perl(DBI), perl(DBD::mysql)
+#Requires:    perl(LWP::Protocol::connect), perl(Catalyst::Plugin::Compress), perl(Excel::Template::Plus), perl(Date::Calc::XS), perl(Catalyst::View::Excel::Template::Plus), perl(Catalyst::Plugin::CustomErrorMessage), perl(Catalyst::View::GD), perl(Catalyst::Plugin::Redirect)
+BuildRequires: perl(Config::Any), perl(Date::Calc), perl(File::Slurp)
+%{?perl_default_filter}
+%global __provides_exclude_from %{_datadir}/%{name}/plugins|%{_datadir}/%{name}/lib
+%global __requires_exclude_from %{_datadir}/%{name}/plugins|%{_datadir}/%{name}/lib|%{_bindir}/thruk|%{_datadir}/%{name}/thruk_auth|%{_datadir}/%{name}/script/thruk_fastcgi.pl
 
 %description thruk-libs
 This package contains the library files for the thruk gui
@@ -150,17 +178,16 @@ rm -f %{name}-core/configure
 rm -f %{name}-livestatus/configure
 
 CFLAGS="%{mycflags} -Wformat" LDFLAGS="$CFLAGS" %configure \
-    --with-initdir="%{_initrddir}" \
     --datadir="%{_datadir}/%{name}" \
     --libdir="%{_libdir}/%{name}" \
     --localstatedir="%{_localstatedir}/lib/%{name}" \
     --sysconfdir="%{_sysconfdir}/%{name}" \
     --enable-event-broker \
-    --without-tests \
     --with-pluginsdir="%{_libdir}/%{name}/plugins" \
     --with-tempdir="%{_localstatedir}/cache/%{name}" \
     --with-checkresultdir="%{_localstatedir}/cache/%{name}/checkresults" \
     --with-logdir="%{_localstatedir}/log/%{name}" \
+    --with-initdir="%{_initrddir}" \
     --with-logrotatedir="%{_sysconfdir}/logrotate.d" \
     --with-naemon-user="%{naemonuser}" \
     --with-naemon-group="%{naemongroup}" \
@@ -175,10 +202,6 @@ CFLAGS="%{mycflags} -Wformat" LDFLAGS="$CFLAGS" %configure \
 
 make %{?_smp_mflags} all
 
-### Build our documentaiton
-cd %{name}-core
-make %{?_smp_mflags} dox
-
 %install
 make install \
     DESTDIR="%{buildroot}" \
@@ -188,13 +211,6 @@ make install \
 
 mv %{buildroot}%{_sysconfdir}/logrotate.d/thruk %{buildroot}%{_sysconfdir}/logrotate.d/%{name}-thruk
 mv %{buildroot}%{_sysconfdir}/logrotate.d/%{name} %{buildroot}%{_sysconfdir}/logrotate.d/%{name}-core
-
-### Install documentation
-mkdir -p -m 0755 %{buildroot}%{_datadir}/%{name}/documentation/search
-cp -a %{name}-core/Documentation/html/* %{buildroot}%{_datadir}/%{name}/documentation
-chmod 0644 %{buildroot}%{_datadir}/%{name}/documentation/*
-chmod 0755 %{buildroot}%{_datadir}/%{name}/documentation/search
-rm -f %{buildroot}%{_datadir}/%{name}/documentation/installdox
 
 # Put the new RC sysconfig in place
 install -d -m 0755 %{buildroot}%{_sysconfdir}/sysconfig/
@@ -207,23 +223,16 @@ ln -s %{_libdir}/nagios/plugins %{buildroot}%{_libdir}/%{name}/plugins
 # Install systemd entry
 install -D -m 0644 -p %{name}-core/daemon-systemd %{buildroot}%{_unitdir}/%{name}.service
 install -D -m 0644 -p %{name}-core/%{name}.tmpfiles.conf %{buildroot}%{_tmpfilesdir}/%{name}.conf
+install -d -m 0755 %{buildroot}/%{_localstatedir}/run/%{name}/
 # Move SystemV init-script
 mv -f %{buildroot}%{_initrddir}/%{name} %{buildroot}%{_bindir}/%{name}-ctl
 %endif
-
-# Cleanup rpath errors in perl modules
-chrpath --delete %{buildroot}%{_libdir}/%{name}/perl5/%{_arch}-linux-thread-multi/auto/GD/GD.so
-chrpath --delete %{buildroot}%{_libdir}/%{name}/perl5/%{_arch}-linux-thread-multi/auto/DBD/mysql/mysql.so
-chrpath --delete %{buildroot}%{_libdir}/%{name}/perl5/%{_arch}-linux-thread-multi/auto/Time/HiRes/HiRes.so
-chrpath --delete %{buildroot}%{_libdir}/%{name}/perl5/%{_arch}-linux-thread-multi/auto/XML/Parser/Expat/Expat.so
-
 
 %pre core
 getent group %{naemongroup} >/dev/null || groupadd -r %{naemongroup}
 getent passwd %{naemonuser} >/dev/null || \
     useradd -r -g %{naemongroup} -d %{_localstatedir}/lib/%{name} \
     -c "%{name} user" %{naemonuser}
-exit 0
 
 %post core
 if [ "$1" = "2" ]; then
@@ -262,6 +271,9 @@ if [ "$1" = "0" ]; then
       service %{name} stop >/dev/null 2>&1 || :
       chkconfig --del %{name} || :
     %endif
+    #rm -f /var/lib/naemon/status.dat
+    rm -f /var/lib/naemon/naemon.qh
+    rm -f /var/lib/naemon/naemon.tmp*
 fi
 
 %postun core
@@ -270,7 +282,7 @@ if [ "$1" = "0" ]; then
           %{_localstatedir}/lib/%{name}/objects.cache \
           %{_localstatedir}/lib/%{name}/objects.precache \
           %{_localstatedir}/lib/%{name}/retention.dat \
-          %{_localstatedir}/log/%{name}/%{name}.log \
+          #%{_localstatedir}/log/%{name}/%{name}.log \
           %{_localstatedir}/log/%{name}/archives \
           %{_localstatedir}/lib/%{name}/%{name}.cmd
     %{insserv_cleanup}
@@ -293,10 +305,10 @@ elif [ "$1" = "1" ]; then
     fi
 fi
 
-%preun livestatus
-if [ "$1" = "0" ]; then
-    rm -f %{_localstatedir}/log/%{name}/livestatus.log
-fi
+#%preun livestatus
+#if [ "$1" = "0" ]; then
+#    rm -f %{_localstatedir}/log/%{name}/livestatus.log
+#fi
 
 %postun livestatus
 if [ "$1" = "0" ]; then
@@ -312,7 +324,6 @@ getent group %{naemongroup} >/dev/null || groupadd -r %{naemongroup}
 getent passwd %{naemonuser} >/dev/null || \
     useradd -r -g %{naemongroup} -d %{_localstatedir}/lib/%{name} \
     -c "%{name} user" %{naemonuser}
-exit 0
 
 # save themes, plugins so we don't reenable them on every update
 rm -rf %{_localstatedir}/cache/%{name}/thruk_update
@@ -330,7 +341,7 @@ chkconfig --add thruk
 mkdir -p %{_localstatedir}/lib/%{name}/thruk %{_localstatedir}/cache/%{name}/thruk %{_sysconfdir}/%{name}/bp %{_localstatedir}/log/%{name} %{_sysconfdir}/%{name}/conf.d
 touch %{_localstatedir}/log/%{name}/thruk.log
 chown -R %{apacheuser}:%{apachegroup} %{_localstatedir}/cache/%{name}/thruk %{_localstatedir}/log/%{name}/thruk.log %{_sysconfdir}/%{name}/plugins/plugins-enabled %{_sysconfdir}/%{name}/thruk_local.conf %{_sysconfdir}/%{name}/bp %{_localstatedir}/lib/%{name}/thruk
-/usr/bin/crontab -l -u %{apacheuser} 2>/dev/null | /usr/bin/crontab -u %{apacheuser} -
+crontab -l -u %{apacheuser} 2>/dev/null | crontab -u %{apacheuser} -
 
 # add webserver user to group naemon
 if /usr/bin/id %{apacheuser} &>/dev/null; then
@@ -352,8 +363,8 @@ if [ -d %{_libdir}/%{name}/perl5 ]; then
   /usr/bin/thruk -a clearcache,installcron --local > /dev/null
 fi
 
-echo "Naemon/Thruk have been configured for http://$(hostname)/naemon/."
-echo "The default user is 'admin' with password 'admin'. You can usually change that by 'htpasswd /etc/naemon/htpasswd admin'. And you really should change that!"
+#echo "Naemon/Thruk have been configured for http://$(hostname)/naemon/."
+#echo "The default user is 'admin' with password 'admin'. You can usually change that by 'htpasswd /etc/naemon/htpasswd admin'. And you really should change that!"
 
 %posttrans thruk
 # restore themes and plugins
@@ -365,7 +376,7 @@ if [ -d %{_localstatedir}/cache/%{name}/thruk_update/plugins/. ]; then
   rm -f %{_sysconfdir}/%{name}/plugins/plugins-enabled/*
   cp -rp %{_localstatedir}/cache/%{name}/thruk_update/plugins/* %{_sysconfdir}/%{name}/plugins/plugins-enabled/ 2>/dev/null  # might fail if no plugins are enabled
 fi
-echo "thruk plugins enabled:" $(ls %{_sysconfdir}/%{name}/plugins/plugins-enabled/)
+#echo "thruk plugins enabled:" $(ls %{_sysconfdir}/%{name}/plugins/plugins-enabled/)
 rm -rf %{_localstatedir}/cache/%{name}/thruk_update
 
 %preun thruk
@@ -444,6 +455,7 @@ fi
   %attr(0644,root,root) %{_unitdir}/%{name}.service
   %attr(0644,root,root) %{_tmpfilesdir}/%{name}.conf
   %attr(0755,root,root) %{_bindir}/%{name}-ctl
+  %attr(0755,%{naemonuser},%{naemongroup}) %dir %{_localstatedir}/run/%{name}
 %else
   %attr(0755,root,root) %{_initrddir}/%{name}
 %endif
@@ -460,9 +472,17 @@ fi
 %attr(0755,%{naemonuser},%{naemongroup}) %dir %{_localstatedir}/lib/%{name}
 %attr(0755,%{naemonuser},%{naemongroup}) %dir %{_localstatedir}/log/%{name}
 %attr(0755,%{naemonuser},%{naemongroup}) %dir %{_localstatedir}/log/%{name}/archives
-%attr(-,root,root) %{_datadir}/%{name}/documentation
 %attr(-,root,root) %{_libdir}/%{name}/libnaemon.so*
 %attr(-,root,root) %{_libdir}/%{name}/plugins
+%{_mandir}/man8/%{name}.8*
+
+%files tools
+%attr(0755,root,root) %{_bindir}/naemonstats
+%attr(0755,root,root) %{_bindir}/oconfsplit
+%attr(0755,root,root) %{_bindir}/shadownaemon
+%{_mandir}/man8/naemonstats.8*
+%{_mandir}/man8/oconfsplit.8*
+%{_mandir}/man8/shadownaemon.8*
 
 %files devel
 %attr(-,root,root) %{_includedir}/%{name}/
@@ -471,7 +491,8 @@ fi
 
 %files livestatus
 %attr(0755,root,root) %{_bindir}/%{name}-unixcat
-%attr(0644,root,root) %{_libdir}/%{name}/livestatus.o
+#FIXME# %attr(0644,root,root) %{_libdir}/%{name}/livestatus.o
+%attr(0644,root,root) %{_libdir}/%{name}/%{name}-livestatus/livestatus.so
 %attr(0755,%{naemonuser},%{naemongroup}) %dir %{_localstatedir}/log/%{name}
 
 %files thruk
@@ -492,6 +513,7 @@ fi
 %config(noreplace) %{_sysconfdir}/%{apachedir}/conf.d/thruk_cookie_auth_vhost.conf
 %config(noreplace) %{_sysconfdir}/%{name}/themes
 %config(noreplace) %{_sysconfdir}/%{name}/menu_local.conf
+%config(noreplace) %{_sysconfdir}/%{name}/usercontent
 %attr(0755,root, root) %{_datadir}/%{name}/thruk_auth
 %attr(0755,root, root) %{_datadir}/%{name}/script/thruk_fastcgi.pl
 %attr(0755,%{apacheuser},%{apachegroup}) %dir %{_localstatedir}/cache/%{name}/thruk
@@ -538,7 +560,7 @@ fi
 %{_mandir}/man8/thruk.8*
 
 %files thruk-libs
-%attr(-,root,root) %{_libdir}/%{name}/perl5
+#%attr(-,root,root) %{_libdir}/%{name}/perl5
 
 %files thruk-reporting
 %{_datadir}/%{name}/plugins/plugins-available/reports2
