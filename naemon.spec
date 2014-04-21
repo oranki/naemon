@@ -301,7 +301,7 @@ if [ "$1" = "2" ]; then
 elif [ "$1" = "1" ]; then
     # New install, enable module
     if [ -e %{_sysconfdir}/%{name}/%{name}.cfg ]; then
-      sed -i %{_sysconfdir}/%{name}/%{name}.cfg -e 's~#\(broker_module=/usr/lib[0-9]*/%{name}/livestatus.o.*\)~\1~'
+      sed -i %{_sysconfdir}/%{name}/%{name}.cfg -e 's~#\(broker_module=/usr/lib[0-9]*/%{name}/livestatus.so.*\)~\1~'
     fi
 fi
 
@@ -314,7 +314,7 @@ fi
 if [ "$1" = "0" ]; then
     # POSTUN
     if [ -e %{_sysconfdir}/%{name}/%{name}.cfg ]; then
-      sed -i %{_sysconfdir}/%{name}/%{name}.cfg -e 's~\(broker_module=/usr/lib[0-9]*/%{name}/livestatus.o.*\)~#\1~'
+      sed -i %{_sysconfdir}/%{name}/%{name}.cfg -e 's~\(broker_module=/usr/lib[0-9]*/%{name}/livestatus.so.*\)~#\1~'
     fi
 fi
 
@@ -491,7 +491,6 @@ fi
 
 %files livestatus
 %attr(0755,root,root) %{_bindir}/%{name}-unixcat
-#FIXME# %attr(0644,root,root) %{_libdir}/%{name}/livestatus.o
 %attr(0644,root,root) %{_libdir}/%{name}/%{name}-livestatus/livestatus.so
 %attr(0755,%{naemonuser},%{naemongroup}) %dir %{_localstatedir}/log/%{name}
 
