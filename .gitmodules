@@ -1,6 +1,6 @@
 [submodule "naemon-core"]
 	path = naemon-core
-	url = https://github.com/naemon/naemon-core.git
+	url = http://git.op5.org/p/monitor/naemon.git
 [submodule "naemon-livestatus"]
 	path = naemon-livestatus
-	url = https://github.com/naemon/naemon-livestatus.git
+	url = http://git.op5.org/p/monitor/livestatus.git

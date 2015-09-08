@@ -3,13 +3,12 @@
 
 .PHONY: override_dh_strip
 
+export DEB_BUILD_MAINT_OPTIONS=hardening=-format
 export DH_VERBOSE=1
 DESTDIR=$(CURDIR)/debian/tmp/
 
-HTTPDCONF=$(shell if [ -d "/etc/apache2/conf-available" ]; then echo "/etc/apache2/conf-available"; else echo "/etc/apache2/conf.d"; fi )
-
 override_dh_auto_configure:
-	dh_auto_configure -- --prefix=/usr \
+	dh_auto_configure -- --prefix="/usr" \
 				--bindir="/usr/bin" \
 				--datadir="/usr/share/naemon" \
 				--libdir="/usr/lib/naemon" \
@@ -17,7 +16,6 @@ override_dh_auto_configure:
 				--sysconfdir="/etc/naemon" \
 				--with-pkgconfdir="/etc/naemon" \
 				--mandir="/usr/share/man" \
-				--enable-event-broker \
 				--with-pluginsdir="/usr/lib/naemon/plugins" \
 				--with-tempdir="/var/cache/naemon" \
 				--with-checkresultdir="/var/cache/naemon/checkresults" \
@@ -27,7 +25,6 @@ override_dh_auto_configure:
 				--with-naemon-user="naemon" \
 				--with-naemon-group="naemon" \
 				--with-lockfile="/var/run/naemon/naemon.pid"
-	echo $(HTTPDCONF)/naemon.conf >> debian/naemon-thruk.install
 
 override_dh_auto_install:
 	dh_auto_install
@@ -35,22 +32,14 @@ override_dh_auto_install:
 	cp -p debian/tmp/usr/bin/naemon debian/tmp/usr/bin/naemon-dbg
 	strip debian/tmp/usr/bin/naemon
 	strip debian/tmp/usr/bin/naemonstats
-	strip debian/tmp/usr/bin/oconfsplit
-	chrpath -c debian/tmp/usr/bin/oconfsplit
 	chrpath -c debian/tmp/usr/bin/shadownaemon
 	chrpath -c debian/tmp/usr/bin/naemonstats
 	strip debian/tmp/usr/bin/shadownaemon
-	strip debian/tmp/usr/bin/naemon-unixcat
 	strip debian/tmp/usr/lib/naemon/libnaemon.so.0.0.0
 	strip debian/tmp/usr/lib/naemon/naemon-livestatus/livestatus.so
 	mv debian/tmp/etc/logrotate.d/naemon debian/tmp/etc/logrotate.d/naemon-core
 	cp naemon-core/naemon.logrotate debian/naemon-core.logrotate
 	ln -s /usr/lib/nagios/plugins debian/tmp/usr/lib/naemon/plugins
-	mkdir -p -m 0755 debian/tmp/usr/share/naemon/examples
-	mv debian/tmp/etc/naemon/conf.d debian/tmp/usr/share/naemon/examples
-
-override_dh_gencontrol:
-	dh_gencontrol
 
 override_dh_strip:
 	dh_strip -pnaemon-core --dbg-package=naemon-core-dbg
